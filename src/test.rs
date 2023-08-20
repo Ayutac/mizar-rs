@@ -1,9 +1,10 @@
 #[cfg(test)]
 mod tests {
   use itertools::Itertools;
+  use crate::accom::Accomodator;
   use crate::parser::MizParser;
   use crate::types::DirectiveKind::{Notations, Vocabularies};
-  use crate::types::{Article, Directives, OrdArticle};
+  use crate::types::{Article, Constructors, Directives, OrdArticle, RequirementIndexes};
   use crate::MizPath;
 
   #[test]
@@ -50,11 +51,29 @@ mod tests {
     let content = miz_path.read_miz().unwrap();
     let mut parser = MizParser::new(miz_path.art, None, &content);
     let mut directives = Directives::default();
+    // compare EVL file
     parser.parse_env(&mut directives);
     assert_eq!(Article::from_lower(b"tarski"), directives.0[Notations].get(1).unwrap().1);
     assert_eq!(Article::from_lower(b"tarski"), directives.0[Vocabularies].get(1).unwrap().1);
     assert_eq!(Article::from_lower(b"xboole_0"), directives.0[Vocabularies].get(2).unwrap().1);
     assert_eq!(Article::from_lower(b"matroid0"), directives.0[Vocabularies].get(3).unwrap().1);
     assert_eq!(Article::from_lower(b"aofa_000"), directives.0[Vocabularies].get(4).unwrap().1);
+  }
+
+  #[test]
+  fn accom() {
+    let miz_path = MizPath::new("xboole_0");
+    let content = miz_path.read_miz().unwrap();
+    let mut parser = MizParser::new(miz_path.art, None, &content);
+    let mut directives = Directives::default();
+    parser.parse_env(&mut directives);
+    let mut acc = Accomodator::default();
+    acc.dirs = directives;
+    let mut con = Constructors::default();
+    // compare ATR file
+    assert!(acc.accom_constructors(&mut con).is_ok());
+    let mut req = RequirementIndexes::default();
+    // compare ERE file
+    assert!(acc.accom_requirements(&con, &mut req).is_ok());
   }
 }
