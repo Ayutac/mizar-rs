@@ -2925,6 +2925,8 @@ impl Clusters {
   }
 }
 
+/// Article wrapper that provides various functions to actually load
+/// the article into memory.
 pub struct MizPath {
   pub art: Article,
 }

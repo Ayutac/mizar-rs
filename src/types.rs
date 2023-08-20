@@ -1026,6 +1026,8 @@ impl<V: VisitMut> Visitable<V> for Attr {
 }
 
 pub const MAX_ARTICLE_LEN: usize = 8;
+/// Representation of an article name in a (lowercase) byte array.
+/// Note that article names longer than MAX_ARTICLE_LEN are forbidden.
 #[derive(Hash, Copy, Clone, Default, PartialEq, Eq)]
 pub struct Article([u8; MAX_ARTICLE_LEN]);
 
@@ -1090,6 +1092,45 @@ impl Article {
   }
   pub fn as_bytes(&self) -> &[u8] { &self.0[..self.0.iter().position(|&x| x == 0).unwrap_or(8)] }
   pub fn as_str(&self) -> &str { std::str::from_utf8(self.as_bytes()).unwrap() }
+}
+
+/// Wrapper for articles that enables sorting them by a list of article names.
+#[derive(Debug)]
+pub struct OrdArticle<'a> {
+  art: Article,
+  ord: &'a Vec<&'a str>,
+}
+
+impl<'a> OrdArticle<'a> {
+  pub fn new(art: Article, ord: &'a Vec<&'a str>) -> Self { OrdArticle{art, ord} }
+  fn index(&self) -> Option<usize> {
+    self.ord.iter().position(|&s| s == self.art.as_str())
+  }
+}
+
+impl<'a> Eq for OrdArticle<'a> {}
+
+impl<'a> PartialEq for OrdArticle<'a> {
+  fn eq(&self, other: &Self) -> bool {
+    self.art == other.art && self.ord as *const _ as usize == other.ord as *const _ as usize
+  }
+}
+
+impl<'a> Ord for OrdArticle<'a> {
+  fn cmp(&self, other: &Self) -> Ordering {
+    let si = self.index();
+    let oi = other.index();
+    if si == oi { return Ordering::Equal; }
+    if si.is_none() { return Ordering::Greater; }
+    if oi.is_none() { return Ordering::Less; }
+    si.cmp(&oi)
+  }
+}
+
+impl<'a> PartialOrd for OrdArticle<'a> {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    Some(self.cmp(other))
+  }
 }
 
 macro_rules! mk_property_kind {
@@ -1869,6 +1910,7 @@ impl<V: VisitMut> Visitable<V> for Libraries {
   }
 }
 
+/// Wrapper for line and column in a document.
 #[derive(Copy, Clone, Default, Eq)]
 pub struct Position {
   pub line: u32,
@@ -2754,6 +2796,7 @@ pub struct DepSchemes {
   pub sch: Vec<Option<Scheme>>,
 }
 
+/// Enum of all the directives in the environment.
 #[derive(Clone, Copy, Debug, Enum, PartialEq, Eq)]
 pub enum DirectiveKind {
   Vocabularies,
@@ -2795,6 +2838,7 @@ impl DirectiveKind {
   }
 }
 
+/// Representation of the environment of an article.
 #[derive(Debug, Default)]
 pub struct Directives(pub EnumMap<DirectiveKind, Vec<(Position, Article)>>);
 
