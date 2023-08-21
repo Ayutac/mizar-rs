@@ -28,13 +28,28 @@ mod tests {
   fn ord_article() {
     let mml_lar = std::fs::read_to_string("miz/mizshare/mml.lar").unwrap();
     let ordering = mml_lar.lines().collect_vec();
-    let tarski = OrdArticle::new(Article::from_lower(b"tarski"), &ordering);
-    let xboole_0 = OrdArticle::new(Article::from_lower(b"xboole_0"), &ordering);
-    let xboole_x = OrdArticle::new(Article::from_lower(b"xboole_x"), &ordering);
+    let tarski_art = Article::from_lower(b"tarski");
+    let xboole_0_art = Article::from_lower(b"xboole_0");
+    let xboole_x_art = Article::from_lower(b"xboole_x");
+    let tarski = OrdArticle::new(&tarski_art, &ordering);
+    let xboole_0 = OrdArticle::new(&xboole_0_art, &ordering);
+    let xboole_x = OrdArticle::new(&xboole_x_art, &ordering);
     assert!(tarski.eq(&tarski));
     assert!(tarski.lt(&xboole_0));
     assert!(tarski.lt(&xboole_x));
     assert!(xboole_0.lt(&xboole_x));
+  }
+
+  #[test]
+  fn directives_sort() {
+    let mut dir = Directives::default();
+    dir.0[Vocabularies].push((Default::default(), Article::from_lower(b"xboole_0")));
+    dir.0[Vocabularies].push((Default::default(), Article::from_lower(b"tarski")));
+    assert_eq!("xboole_0", dir.0[Vocabularies].get(0).unwrap().1.as_str());
+    let mml_lar = std::fs::read_to_string("miz/mizshare/mml.lar").unwrap();
+    let ordering = mml_lar.lines().collect_vec();
+    dir.sort(false, &ordering);
+    assert_eq!("tarski", dir.0[Vocabularies].get(0).unwrap().1.as_str());
   }
 
   #[test]

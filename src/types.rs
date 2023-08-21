@@ -1097,12 +1097,12 @@ impl Article {
 /// Wrapper for articles that enables sorting them by a list of article names.
 #[derive(Debug)]
 pub struct OrdArticle<'a> {
-  art: Article,
+  art: &'a Article,
   ord: &'a Vec<&'a str>,
 }
 
 impl<'a> OrdArticle<'a> {
-  pub fn new(art: Article, ord: &'a Vec<&'a str>) -> Self { OrdArticle{art, ord} }
+  pub fn new(art: &'a Article, ord: &'a Vec<&'a str>) -> Self { OrdArticle{art, ord} }
   fn index(&self) -> Option<usize> {
     self.ord.iter().position(|&s| s == self.art.as_str())
   }
@@ -2841,6 +2841,24 @@ impl DirectiveKind {
 /// Representation of the environment of an article.
 #[derive(Debug, Default)]
 pub struct Directives(pub EnumMap<DirectiveKind, Vec<(Position, Article)>>);
+
+impl Directives {
+  pub fn sort(&mut self, notations: bool, ord: &Vec<&str>) {
+    let sorter = |&l: &(Position, Article), &r: &(Position, Article)| *&OrdArticle::new(&l.1, ord).cmp(&OrdArticle::new(&r.1, ord));
+    self.0[DirectiveKind::Vocabularies].sort_by(&sorter);
+    if notations {
+      self.0[DirectiveKind::Notations].sort_by(&sorter);
+    }
+    self.0[DirectiveKind::Definitions].sort_by(&sorter);
+    self.0[DirectiveKind::Theorems].sort_by(&sorter);
+    self.0[DirectiveKind::Schemes].sort_by(&sorter);
+    self.0[DirectiveKind::Registrations].sort_by(&sorter);
+    self.0[DirectiveKind::Constructors].sort_by(&sorter);
+    self.0[DirectiveKind::Requirements].sort_by(&sorter);
+    self.0[DirectiveKind::Equalities].sort_by(&sorter);
+    self.0[DirectiveKind::Expansions].sort_by(&sorter);
+  }
+}
 
 #[derive(Clone, Debug)]
 pub struct DepRequirement {
