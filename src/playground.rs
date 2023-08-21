@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::{Config, MizPath, parser};
+    use crate::accom::Accomodator;
     use crate::parser::*;
     use crate::reader::Reader;
     use crate::types::{Article, Directives};
@@ -18,8 +19,8 @@ mod tests {
             unify_header: false,
             unify_insts: false,
             dump: Default::default(),
-            accom_enabled: false,
-            parser_enabled: false,
+            accom_enabled: true,
+            parser_enabled: true,
             nameck_enabled: false,
             analyzer_enabled: true,
             analyzer_full: false,
@@ -38,12 +39,13 @@ mod tests {
             skip_to_verbose: false,
         };
         let path = MizPath::new("xboole_0");
-        let mut reader = Reader::new(&cfg, None, None, Default::default());
-        //reader.run_analyzer(&path, None);
-        let data = path.read_miz().unwrap();
-        let mut parser = MizParser::new(Article::from_lower(b"xboole_0"), None, &data);
-        let mut directives = Directives::default();
-        parser.parse_env(&mut directives);
+        let mut reader = Reader::new(&cfg, None, Some(Box::new(Accomodator::default())), path.art);
+        let mml_vct = std::fs::read("miz/mizshare/mml.vct").unwrap();
+        //path.with_reader(&cfg, None, &mml_vct, &mut |v| v.run_analyzer(&MizPath {}, None));
+        let content = path.read_miz().unwrap();
+        let mut parser = MizParser::new(path.art, None, &content);
+        parser.parse_env(&mut Default::default());
+        reader.run_analyzer(&path, Some(&mut parser));
         //println!("{:?}", directives);
     }
 }
