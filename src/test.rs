@@ -6,14 +6,15 @@ mod tests {
   use crate::types::DirectiveKind::{Notations, Vocabularies};
   use crate::types::{Article, Constructors, Directives, OrdArticle, RequirementIndexes};
   use crate::MizPath;
+  use crate::write::OWriteJson;
 
   #[test]
   fn article() {
-    let article_lower = Article::from_lower(b"xboole_0");
-    let article_upper = Article::from_upper(b"XBOOLE_0");
+    let article_lower = Article::from_lower(b"xboole_0").unwrap();
+    let article_upper = Article::from_upper(b"XBOOLE_0").unwrap();
     assert_eq!(article_lower, article_upper);
-    let article_short = Article::from_lower(b"ups");
-    let article_normal = Article::from_lower(b"ups\0\0\0\0\0");
+    let article_short = Article::from_lower(b"ups").unwrap();
+    let article_normal = Article::from_lower(b"ups\0\0\0\0\0").unwrap();
     assert_eq!(article_normal, article_short);
     assert_eq!("ups", article_normal.as_str());
   }
@@ -28,9 +29,9 @@ mod tests {
   fn ord_article() {
     let mml_lar = std::fs::read_to_string("miz/mizshare/mml.lar").unwrap();
     let ordering = mml_lar.lines().collect_vec();
-    let tarski_art = Article::from_lower(b"tarski");
-    let xboole_0_art = Article::from_lower(b"xboole_0");
-    let xboole_x_art = Article::from_lower(b"xboole_x");
+    let tarski_art = Article::from_lower(b"tarski").unwrap();
+    let xboole_0_art = Article::from_lower(b"xboole_0").unwrap();
+    let xboole_x_art = Article::from_lower(b"xboole_x").unwrap();
     let tarski = OrdArticle::new(&tarski_art, &ordering);
     let xboole_0 = OrdArticle::new(&xboole_0_art, &ordering);
     let xboole_x = OrdArticle::new(&xboole_x_art, &ordering);
@@ -43,8 +44,8 @@ mod tests {
   #[test]
   fn directives_sort() {
     let mut dir = Directives::default();
-    dir.0[Vocabularies].push((Default::default(), Article::from_lower(b"xboole_0")));
-    dir.0[Vocabularies].push((Default::default(), Article::from_lower(b"tarski")));
+    dir.0[Vocabularies].push((Default::default(), Article::from_lower(b"xboole_0").unwrap()));
+    dir.0[Vocabularies].push((Default::default(), Article::from_lower(b"tarski").unwrap()));
     assert_eq!("xboole_0", dir.0[Vocabularies].get(0).unwrap().1.as_str());
     let mml_lar = std::fs::read_to_string("miz/mizshare/mml.lar").unwrap();
     let ordering = mml_lar.lines().collect_vec();
@@ -54,32 +55,32 @@ mod tests {
 
   #[test]
   fn miz_path() {
-    let miz_path = MizPath::new("xboole_0");
+    let miz_path = MizPath::new("xboole_0").unwrap();
     assert!(miz_path.read_miz().is_ok());
-    let miz_path = MizPath::new("xboole_x");
+    let miz_path = MizPath::new("xboole_x").unwrap();
     assert!(miz_path.read_miz().is_err());
   }
 
   #[test]
   fn miz_parser() {
-    let miz_path = MizPath::new("xboole_0");
+    let miz_path = MizPath::new("xboole_0").unwrap();
     let content = miz_path.read_miz().unwrap();
-    let mut parser = MizParser::new(miz_path.art, None, &content);
+    let mut parser = MizParser::new(miz_path.art, None, &content, OWriteJson(None));
     let mut directives = Directives::default();
     // compare EVL file
     parser.parse_env(&mut directives);
-    assert_eq!(Article::from_lower(b"tarski"), directives.0[Notations].get(1).unwrap().1);
-    assert_eq!(Article::from_lower(b"tarski"), directives.0[Vocabularies].get(1).unwrap().1);
-    assert_eq!(Article::from_lower(b"xboole_0"), directives.0[Vocabularies].get(2).unwrap().1);
-    assert_eq!(Article::from_lower(b"matroid0"), directives.0[Vocabularies].get(3).unwrap().1);
-    assert_eq!(Article::from_lower(b"aofa_000"), directives.0[Vocabularies].get(4).unwrap().1);
+    assert_eq!(Article::from_lower(b"tarski").unwrap(), directives.0[Notations].get(1).unwrap().1);
+    assert_eq!(Article::from_lower(b"tarski").unwrap(), directives.0[Vocabularies].get(1).unwrap().1);
+    assert_eq!(Article::from_lower(b"xboole_0").unwrap(), directives.0[Vocabularies].get(2).unwrap().1);
+    assert_eq!(Article::from_lower(b"matroid0").unwrap(), directives.0[Vocabularies].get(3).unwrap().1);
+    assert_eq!(Article::from_lower(b"aofa_000").unwrap(), directives.0[Vocabularies].get(4).unwrap().1);
   }
 
   #[test]
   fn accom() {
-    let miz_path = MizPath::new("xboole_0");
+    let miz_path = MizPath::new("xboole_0").unwrap();
     let content = miz_path.read_miz().unwrap();
-    let mut parser = MizParser::new(miz_path.art, None, &content);
+    let mut parser = MizParser::new(miz_path.art, None, &content, OWriteJson(None));
     let mut directives = Directives::default();
     parser.parse_env(&mut directives);
     let mut acc = Accomodator::default();
