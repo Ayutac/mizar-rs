@@ -31,6 +31,7 @@ mod types;
 mod unify;
 mod util;
 mod write;
+mod test;
 
 pub use global::*;
 
